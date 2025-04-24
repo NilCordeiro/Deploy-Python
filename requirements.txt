@@ -1,8 +1,6 @@
-
 numpy>=1.26.4
 streamlit>=1.37.1
 pandas>=2.2.2
-plotly_expre>=0.4.1
+plotly>=5.20.0
 openpyxl>=3.1.2
 matplotlib>=3.8
-
