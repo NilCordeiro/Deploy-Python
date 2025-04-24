@@ -1,11 +1,8 @@
 
 numpy>=1.26.4
-streamlit>=1.33.0
+streamlit>=1.37.1
 pandas>=2.2.2
-plotly>=5.20.0
+plotly_expre>=0.4.1
 openpyxl>=3.1.2
 matplotlib>=3.8
-scikit-learn>=1.4
 
-pip install --upgrade numpy
-pip install --force-reinstall pandas matplotlib scikit-learn
