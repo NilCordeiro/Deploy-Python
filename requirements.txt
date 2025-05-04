@@ -4,4 +4,4 @@ pandas>=2.2.2
 plotly-express>=0.4.1
 openpyxl>=3.1.2
 matplotlib>=3.8
-sklearn>=1.5.1
+scikit-learn==0.24.21.5.1
