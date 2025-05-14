@@ -52,7 +52,7 @@ with col3:
 
 if st.checkbox("Filmes Personalizados:"):
     st.markdown("**Lista filmes personalizados:**")
-    st.markdown(f"segue estoque filmes personalizados pela empresa MC total R$ {total_fat}")
+    st.markdown(f"segue estoque filmes personalizados pela empresa MC total R$ {total_fat:,.2f}")
     st.dataframe(df_filmes)
 
 st.markdown("""---""")
