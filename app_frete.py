@@ -22,6 +22,13 @@ st.write("Data coleta",data_formatada)
 df_carga_rapida = pd.read_excel("TABELA PRAZO CARGA RAPIDA.xlsx")
 df_vb = pd.read_excel("TABELA PRAZOS VB.xlsx")
 df_rio_grande = pd.read_excel("TABEL PRAZO RIO GRANDE.xlsx")
+df_filmes = pd.read_excel("T_FILMES.xlsx")
+df_filmes_copia = df_filmes.copy()
+df_filmes["R$ VALOR ESTOQUE"] = df_filmes["R$ VALOR ESTOQUE"].apply(lambda x: f'R$ {x:,.2f}'.replace(",", "X").replace(".", ",").replace("X", "."))
+
+# Calculo df_filmes
+
+total_fat = df_filmes_copia['R$ VALOR ESTOQUE'].sum()
 
 st.write("**Tabela de prazos por transportadoras**")
 
@@ -39,9 +46,14 @@ with col2:
         st.dataframe(df_vb)
 
 with col3:
-    if st.checkbox("Tabela prazo Rio Grande"):
+    if st.checkbox("Tabela prazo Rio Grande:"):
         st.write("Contato: Luísa Mara (85) 9108-4249")
         st.dataframe(df_rio_grande)
+
+if st.checkbox("Filmes Personalizados:"):
+    st.markdown("**Lista filmes personalizados:**")
+    st.markdown(f"segue estoque filmes personalizados pela empresa MC total R$ {total_fat}")
+    st.dataframe(df_filmes)
 
 st.markdown("""---""")
 
