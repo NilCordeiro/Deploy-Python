@@ -52,10 +52,9 @@ with col3:
         st.dataframe(df_rio_grande)
 
 
-if st.checkbox("Filmes Personalizados:"):
-    st.markdown("**Lista filmes personalizados:**")
-    st.markdown(f"segue estoque filmes personalizados pela empresa MC total R$ {total_fat:,.2f}")
-    st.dataframe(df_filmes)
+st.markdown("**Lista filmes personalizados:**")
+st.markdown(f"Saldo em estoque filmes personalizados pela empresa MC com um total de R$ {total_fat:,.2f}")
+st.dataframe(df_filmes)
 
 st.markdown("""---""")
 
@@ -113,12 +112,6 @@ if df_filter.empty:
     st.warning("Nenhum dado disponível com base nas configurações de filtro atuais!")
     st.stop() 
 
-
-#plotando grafico
-
-st.plotly_chart(fig)
-st.markdown("O gráfico mostra a contagem por clientes região.")
-st.markdown("""---""")
 # plotando filtro
 
 st.caption("Tabela coleta")
@@ -134,5 +127,9 @@ if st.checkbox("Filtro Data"):
     qtd_pedidos = df_filter2['RAZÃO SOCIAL DESTINO'].count()
     st.write(f"{qtd_pedidos} Pedidos")
     st.dataframe(df_filter2)
+    
+st.markdown("""---""")
 
+st.plotly_chart(fig)
+st.markdown("O gráfico mostra a quantidade pedidos por região.")
 
