@@ -4,6 +4,11 @@ import pandas as pd
 import xml.etree.ElementTree as ET
 import os
 import io
+from PIL import Image
+import base64
+from io import BytesIO
+
+st.set_page_config(page_title="CTe-XML",page_icon='📈')
 
 st.title("Leitor de CT-e XML")
 st.write("Selecione os arquivos XML de CT-e para extrair os dados.")
@@ -83,3 +88,48 @@ if arquivos:
 else:
     st.info("Aguardando upload de arquivos XML.")
 
+
+
+#------------------------------------------------------------------------------------------------------------
+# Imagem sidibar
+# Caminho da imagem local
+# Caminho da imagem local
+caminho_imagem = "imagem.JPG"
+
+# Abrir imagem com PIL
+imagem = Image.open(caminho_imagem)
+
+# Converter imagem para base64
+def get_image_base64(img):
+    buffered = BytesIO()
+    img.save(buffered, format="PNG")
+    img_bytes = buffered.getvalue()
+    return base64.b64encode(img_bytes).decode()
+
+img_base64 = get_image_base64(imagem)
+
+# CSS para imagem arredondada
+st.markdown("""
+    <style>
+    .img-redonda {
+        border-radius: 50%;
+        width: 200px;
+        height: 200px;
+        object-fit: cover;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# Exibir imagem com HTML
+st.sidebar.markdown(f'<img src="data:image/png;base64,{img_base64}" class="img-redonda">', unsafe_allow_html=True)
+#st.sidebar.image('imagem.jpg',caption= 'Nil Cordeiro - Machine Learning and Data Science student',width= 160,channels="RGB")
+st.sidebar.markdown("**Nil Cordeiro Analista de Dados**")
+st.sidebar.markdown("""
+                
+                    Principais tecnologias:
+                    - Python
+                    - Machine Learning
+                    - Power Bi
+                    - SQL
+                    - Excel/VBA                  
+""")
