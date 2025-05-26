@@ -105,7 +105,7 @@ st.markdown("""
 #------------------------------------------------------------------------------------------------------------
 # Imagem sidibar
 # Caminho da imagem local
-caminho_imagem = "imagem.JPG"
+caminho_imagem = os.path.join(os.path.dirname(__file__), 'imagem.JPG')
 
 # Abrir imagem com PIL
 imagem = Image.open(caminho_imagem)
