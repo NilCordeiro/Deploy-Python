@@ -123,21 +123,14 @@ st.markdown("""
 
 # Exibir imagem com HTML
 st.sidebar.markdown(f'<img src="data:image/png;base64,{img_base64}" class="img-redonda">', unsafe_allow_html=True)
-st.sidebar.write("**Nil Cordeiro**")
 #st.sidebar.image('imagem.jpg',caption= 'Nil Cordeiro - Machine Learning and Data Science student',width= 160,channels="RGB")
-st.sidebar.write("**Principais tecnologias**:Python,SQL,Power Bi,Excel/VBA.")
-
-st.title('Tips')
-st.write('Analisando dataset tips')
-st.write("**Perguntas sobre  o dataset**")
-
-st.markdown("""
-            
-      - 1 Qual é o valor médio da gorjeta?
-      - 2 Existe correlação entre o valor da conta e o valor da gorjeta
-      - 3 Homens ou mulheres recebem mais gorjetas, em média?
-      - 4 Clientes fumantes dão mais gorjetas que não fumantes?
-      - 5 Em que dia da semana são dadas as maiores gorjetas?
-
+st.sidebar.markdown("**Nil Cordeiro Analista de Dados**")
+st.sidebar.markdown("""
+                
+                    Principais tecnologias:
+                    - Python
+                    - Machine Learning
+                    - Power Bi
+                    - SQL
+                    - Excel/VBA                  
 """)
-
