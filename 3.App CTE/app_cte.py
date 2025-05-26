@@ -93,4 +93,49 @@ else:
 #------------------------------------------------------------------------------------------------------------
 # Imagem sidibar
 # Caminho da imagem local
-# Caminho da imagem local
+caminho_imagem = "imagem.JPG"
+
+# Abrir imagem com PIL
+imagem = Image.open(caminho_imagem)
+
+# Converter imagem para base64
+def get_image_base64(img):
+    buffered = BytesIO()
+    img.save(buffered, format="PNG")
+    img_bytes = buffered.getvalue()
+    return base64.b64encode(img_bytes).decode()
+
+img_base64 = get_image_base64(imagem)
+
+# CSS para imagem arredondada
+st.markdown("""
+    <style>
+    .img-redonda {
+        border-radius: 50%;
+        width: 200px;
+        height: 200px;
+        object-fit: cover;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# Exibir imagem com HTML
+st.sidebar.markdown(f'<img src="data:image/png;base64,{img_base64}" class="img-redonda">', unsafe_allow_html=True)
+st.sidebar.write("**Nil Cordeiro**")
+#st.sidebar.image('imagem.jpg',caption= 'Nil Cordeiro - Machine Learning and Data Science student',width= 160,channels="RGB")
+st.sidebar.write("**Principais tecnologias**:Python,SQL,Power Bi,Excel/VBA.")
+
+st.title('Tips')
+st.write('Analisando dataset tips')
+st.write("**Perguntas sobre  o dataset**")
+
+st.markdown("""
+            
+      - 1 Qual é o valor médio da gorjeta?
+      - 2 Existe correlação entre o valor da conta e o valor da gorjeta
+      - 3 Homens ou mulheres recebem mais gorjetas, em média?
+      - 4 Clientes fumantes dão mais gorjetas que não fumantes?
+      - 5 Em que dia da semana são dadas as maiores gorjetas?
+
+""")
+
