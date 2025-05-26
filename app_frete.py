@@ -115,7 +115,7 @@ if df_filter.empty:
 # plotando filtro
 
 st.caption("Tabela coleta")
-st.write(f"{count_pedidos} Pedidos coleta em {data_formatada}")
+st.write(f"{count_pedidos} Pedidos coletados para a região {pesquisa} em {data_formatada}")
 st.dataframe(df_filter)
 
 
