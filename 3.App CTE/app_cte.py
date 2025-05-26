@@ -88,14 +88,24 @@ if arquivos:
 else:
     st.info("Aguardando upload de arquivos XML.")
 
+st.markdown("""
+            Transforme a burocracia em produtividade com nosso aplicativo de conversão XML CT-e para Excel.
+            
+            Ideal para contadores, transportadoras e profissionais do setor logístico que precisam organizar, analisar e entregar informações de forma ágil e precisa.
 
+            **Rápido, seguro e 100% online.**
+
+            Não perca mais tempo com planilhas manuais — experimente agora!
+
+            🎁 **Comece a converter gratuitamente**
+
+            👉 Se precisar personalizar de acordo com sua necessidade entre em contato pelo (85)98576-6920
+            """)
 
 #------------------------------------------------------------------------------------------------------------
 # Imagem sidibar
 # Caminho da imagem local
-
-caminho_imagem = os.path.join(os.path.dirname(__file__), 'imagem.JPG')
-#caminho_imagem = "imagem.JPG"
+caminho_imagem = "imagem.JPG"
 
 # Abrir imagem com PIL
 imagem = Image.open(caminho_imagem)
