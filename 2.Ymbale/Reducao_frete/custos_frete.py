@@ -103,9 +103,12 @@ st.write('Estados Região ',regiao)
 st.plotly_chart(fig)
 
 fig_scatter = px.scatter(
-    df_filter,x = 'VALOR TOTAL DA MERCADORIA',y = 'VALOR A RECEBER',
-    size = 'VALOR TOTAL DA MERCADORIA',hover_data = 'VALOR A RECEBER',
-    marginal_x="histogram", marginal_y="rug",trendline="ols"
+    df_filter,x = 'VALOR TOTAL DA MERCADORIA',
+    y = 'VALOR A RECEBER',
+    size = 'VALOR A RECEBER',
+    hover_data = 'VALOR A RECEBER',
+    marginal_x="histogram", 
+    marginal_y="rug",trendline="ols"
     )
 
 st.write('Região: ',regiao)
