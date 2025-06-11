@@ -75,7 +75,6 @@ st.sidebar.markdown("Empresa de embalagens em Maracanaú, Ceará")
 st.sidebar.markdown("**Obs:** Toda e qualquer dúvida gerada devem ser tratadas com o setor logístico.")
 st.sidebar.markdown("""
                     
-    - Assitente Frete: Jander
     - Analista Logística: Nil
     - Coodernador: Marcelo
 
