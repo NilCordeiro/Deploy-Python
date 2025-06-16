@@ -9,7 +9,7 @@ st.set_page_config(page_title= "Logística Ymbale",layout="wide")
                                   
 st.title("🚚 Coleta Ymbale",)
 hoje = date.today()
-nova_data = hoje - timedelta(days=1)
+nova_data = hoje - timedelta(days=3)
 #data_pes = nova_data.strftime('%d/%m/%y')
 data_formatada = nova_data.strftime('%d/%m/%y')
 
