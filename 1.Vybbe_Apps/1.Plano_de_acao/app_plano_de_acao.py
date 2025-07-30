@@ -20,8 +20,7 @@ section = st.sidebar.radio("Navegar para:", [
 if section == "🔍 Imersão no Negócio":
     st.header("🔍 1. Imersão no Negócio (Primeiros 15 dias)")
     st.markdown("""
-- Reuniões com as equipes:
-    - Marketing
+- Acompanhamento com as equipes:
     - Gestão de Artistas
     - Distribuição Digital
 - Mapeamento dos canais:
