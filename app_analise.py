@@ -75,9 +75,21 @@ st.header("2. Popularidade com Regressão Linear")
 file_path_popularity = "Chartmetric_Score.xlsx"
 
 try:
-    df_popularity = pd.read_excel(file_path_popularity)
+    df_popularity = pd.read_csv(file_path_popularity, sep=';')
     df_popularity.columns = ['data', 'valor']
-    df_popularity['data'] = pd.to_datetime(df_popularity['data'], format='%d de %b. de %Y')
+
+    # Mapeamento para corrigir o erro da data
+    meses = {
+        'jan.': 'Jan', 'fev.': 'Feb', 'mar.': 'Mar', 'abr.': 'Apr',
+        'mai.': 'May', 'jun.': 'Jun', 'jul.': 'Jul', 'ago.': 'Aug',
+        'set.': 'Sep', 'out.': 'Oct', 'nov.': 'Nov', 'dez.': 'Dec'
+    }
+
+    # Substituir os meses em português por suas abreviações em inglês
+    df_popularity['data'] = df_popularity['data'].astype(str).str.replace(r'de\s+(\w+)\.', lambda m: 'de ' + meses.get(m.group(1)+'.', m.group(1)), regex=True)
+
+    # Converter a coluna de data para o formato datetime
+    df_popularity['data'] = pd.to_datetime(df_popularity['data'], format='%d de %b de %Y')
     df_popularity = df_popularity.sort_values('data')
 
     max_value = df_popularity['valor'].max()
