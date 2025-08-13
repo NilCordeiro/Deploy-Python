@@ -5,7 +5,6 @@ import plotly.graph_objects as go
 from sklearn.linear_model import LinearRegression
 import numpy as np
 import locale
-from PIL import Image
 
 # --- Configuração da Página ---
 # Deve ser a primeira chamada no script
@@ -32,9 +31,8 @@ st.markdown("""
 Este painel combina a visualização de streams ao longo do tempo com a análise da tendência de popularidad.
 """)
 
-#caminho_img = Image.open("nome_na_bio.jpeg")
 
-#st.image(caminho_img,width = 300)
+st.image('nome_na_bio.jpeg',width = 300)
 
 # --- Seção 1: Gráfico de Timeline de Streams ---
 st.header("1. Streams Nome na Bio Longo do Tempo")
@@ -42,31 +40,23 @@ st.markdown("**Track Score:**" \
 "- índice de popularidade global da faixa, consolidando dados de plataformas como Spotify   \nYouTube, TikTok, Airplay, SoundCloud, Pandora e Shazam")
 
 # Caminho do arquivo da timeline
-file_path_timeline = 'Nome na Bio-timeline.xlsx'
 
-try:
-    df_timeline = pd.read_excel(file_path_timeline)
-    df_timeline['date'] = pd.to_datetime(df_timeline['date'])
-    df_timeline = df_timeline.sort_values('date')
 
-    fig_timeline = px.area(
-        df_timeline,
-        x='date',
-        y='streams',
-        title='Streams Diários',
-        labels={'date': 'Data', 'streams': 'Contagem de Streams'}
+
+df_timeline = pd.read_excel("Nome na Bio-timeline.xlsx")
+df_timeline['date'] = pd.to_datetime(df_timeline['date'])
+df_timeline = df_timeline.sort_values('date')
+
+fig_timeline = px.area(
+    df_timeline,
+    x='date',
+    y='streams',
+    title='Streams Diários',
+    labels={'date': 'Data', 'streams': 'Contagem de Streams'}
     )
 
-    fig_timeline.update_layout(xaxis_rangeslider_visible=True)
-    st.plotly_chart(fig_timeline, use_container_width=True)
-
-except FileNotFoundError:
-    st.error(f"Erro: O arquivo '{file_path_timeline}' não foi encontrado.")
-except KeyError:
-    st.error("Erro: O arquivo de timeline não contém as colunas esperadas ('date', 'streams').")
-except Exception as e:
-    st.error(f"Ocorreu um erro ao processar o arquivo de timeline: {e}")
-
+fig_timeline.update_layout(xaxis_rangeslider_visible=True)
+st.plotly_chart(fig_timeline, use_container_width=True)
 
 # --- Seção 2: Gráfico de Popularidade com Regressão Linear ---
 st.header("2. Popularidade com Regressão Linear")
