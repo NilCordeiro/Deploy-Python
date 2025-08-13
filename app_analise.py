@@ -75,7 +75,7 @@ st.header("2. Popularidade com Regressão Linear")
 file_path_popularity = "Chartmetric_Score.xlsx"
 
 try:
-    df_popularity = pd.read_csv(file_path_popularity, sep=';')
+    df_popularity = pd.read_excel(file_path_popularity)
     df_popularity.columns = ['data', 'valor']
 
     # Mapeamento para corrigir o erro da data
