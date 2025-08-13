@@ -32,9 +32,9 @@ st.markdown("""
 Este painel combina a visualização de streams ao longo do tempo com a análise da tendência de popularidad.
 """)
 
-caminho_img = Image.open("nome_na_bio.jpeg")
+#caminho_img = Image.open("nome_na_bio.jpeg")
 
-st.image(caminho_img,width = 300)
+#st.image(caminho_img,width = 300)
 
 # --- Seção 1: Gráfico de Timeline de Streams ---
 st.header("1. Streams Nome na Bio Longo do Tempo")
@@ -42,7 +42,7 @@ st.markdown("**Track Score:**" \
 "- índice de popularidade global da faixa, consolidando dados de plataformas como Spotify   \nYouTube, TikTok, Airplay, SoundCloud, Pandora e Shazam")
 
 # Caminho do arquivo da timeline
-file_path_timeline = 'C:\\Users\\Nil Cordeiro\\Documents\\GitHub\\Deploy-Python\\1.Vybbe_Apps\\Analise_Nome_na_Bio\\Nome na Bio-timeline.xlsx'
+file_path_timeline = 'Nome na Bio-timeline.xlsx'
 
 try:
     df_timeline = pd.read_excel(file_path_timeline)
