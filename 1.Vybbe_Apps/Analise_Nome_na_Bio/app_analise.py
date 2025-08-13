@@ -34,7 +34,7 @@ import os
 from PIL import Image
 import streamlit as st
 
-imagem_path = "nome_na_bio.jpeg"
+imagem_path = "imagem.jpeg"
 
 if os.path.exists(imagem_path):
     st.image(imagem_path)
@@ -53,7 +53,7 @@ st.markdown("**Track Score:**" \
 
 
 
-df_timeline = pd.read_excel("Nome na Bio-timeline.xlsx")
+df_timeline = pd.read_excel("data.xlsx")
 df_timeline['date'] = pd.to_datetime(df_timeline['date'])
 df_timeline = df_timeline.sort_values('date')
 
@@ -72,7 +72,7 @@ st.plotly_chart(fig_timeline, use_container_width=True)
 st.header("2. Popularidade com Regressão Linear")
 
 # Caminho do arquivo de popularidade
-file_path_popularity = 'Chartmetric_Score.xlsx'
+file_path_popularity = "Chartmetric_Score.xlsx"
 
 try:
     df_popularity = pd.read_excel(file_path_popularity)
