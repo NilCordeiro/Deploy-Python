@@ -30,9 +30,19 @@ st.title("🎶 Análise de Streams por Timeline")
 st.markdown("""
 Este painel combina a visualização de streams ao longo do tempo com a análise da tendência de popularidad.
 """)
+import os
+from PIL import Image
+import streamlit as st
+
+imagem_path = "nome_na_bio.jpeg"
+
+if os.path.exists(imagem_path):
+    st.image(imagem_path)
+else:
+    st.error(f"Arquivo não encontrado: {imagem_path}")
 
 
-st.image('nome_na_bio.jpeg',width = 300)
+#st.image('nome_na_bio.jpeg',width = 300)
 
 # --- Seção 1: Gráfico de Timeline de Streams ---
 st.header("1. Streams Nome na Bio Longo do Tempo")
