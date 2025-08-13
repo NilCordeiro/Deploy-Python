@@ -42,7 +42,7 @@ st.markdown("**Track Score:**" \
 "- índice de popularidade global da faixa, consolidando dados de plataformas como Spotify   \nYouTube, TikTok, Airplay, SoundCloud, Pandora e Shazam")
 
 # Caminho do arquivo da timeline
-file_path_timeline = 'C:\\Users\\Nil Cordeiro\\Downloads\\Analise\\Nome na Bio-timeline.xlsx'
+file_path_timeline = 'C:\\Users\\Nil Cordeiro\\Documents\\GitHub\\Deploy-Python\\1.Vybbe_Apps\\Analise_Nome_na_Bio\\Nome na Bio-timeline.xlsx'
 
 try:
     df_timeline = pd.read_excel(file_path_timeline)
@@ -72,7 +72,7 @@ except Exception as e:
 st.header("2. Popularidade com Regressão Linear")
 
 # Caminho do arquivo de popularidade
-file_path_popularity = 'C:\\Users\\Nil Cordeiro\\Downloads\\Analise\\Chartmetric_Score.xlsx'
+file_path_popularity = 'C:\\Users\\Nil Cordeiro\\Documents\\GitHub\\Deploy-Python\\1.Vybbe_Apps\\Analise_Nome_na_Bio\\Chartmetric_Score.xlsx'
 
 try:
     df_popularity = pd.read_excel(file_path_popularity)
