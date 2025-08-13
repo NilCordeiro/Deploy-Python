@@ -72,7 +72,7 @@ except Exception as e:
 st.header("2. Popularidade com Regressão Linear")
 
 # Caminho do arquivo de popularidade
-file_path_popularity = 'C:\\Users\\Nil Cordeiro\\Documents\\GitHub\\Deploy-Python\\1.Vybbe_Apps\\Analise_Nome_na_Bio\\Chartmetric_Score.xlsx'
+file_path_popularity = 'Chartmetric_Score.xlsx'
 
 try:
     df_popularity = pd.read_excel(file_path_popularity)
