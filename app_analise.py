@@ -15,17 +15,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Configuração de locale para lidar com datas em português
-try:
-    locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')
-except locale.Error:
-    st.warning("Não foi possível definir o locale 'pt_BR.UTF-8'. As datas podem não ser exibidas corretamente.")
-    try:
-        locale.setlocale(locale.LC_TIME, 'portuguese')
-    except locale.Error:
-        st.error("Não foi possível definir o locale para português. As datas podem causar erros.")
-
-# --- Título Geral do Aplicativo ---
 st.title("🎶 Análise de Streams por Timeline")
 st.markdown("""
 Este painel combina a visualização de streams ao longo do tempo com a análise da tendência de popularidad.
