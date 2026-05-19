@@ -165,7 +165,7 @@ def display_chart(sheet_index, section_title, item_type, key_suffix, chart_type,
         st.write("---")
         return
         
-    df[date_col_name] = pd.to_datetime(df[date_col_name], format="%d/%m/%Y")
+    df[date_col_name] = pd.to_datetime(df[date_col_name], format="%d/%m/%Y",errors  = "coerce")
     
     df_display = pd.DataFrame()
     selected_date_display = None
