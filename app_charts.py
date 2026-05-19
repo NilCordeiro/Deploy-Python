@@ -3,8 +3,7 @@ import streamlit as st
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime, timedelta
-import spotipy
-from spotipy.oauth2 import SpotifyClientCredentials
+import requests  # Substitui spotipy e googleapiclient para uma abordagem leve e sem chaves
 import plotly.express as px
 from dotenv import load_dotenv
 import os
@@ -68,97 +67,62 @@ def load_data(sheet_index):
         st.error(f"Erro ao acessar a planilha (sheet {sheet_index}): {e}")
         return pd.DataFrame()
 
-SPOTIPY_CLIENT_ID = os.getenv("SPOTIPY_CLIENT_ID")
-SPOTIPY_CLIENT_SECRET = os.getenv("SPOTIPY_CLIENT_SECRET")
-try:
-    # AQUI ESTAVA O ERRO DE DIGITAÇÃO: SpotifyClientClientCredentials -> SpotifyClientCredentials
-    sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=SPOTIPY_CLIENT_ID, client_secret=SPOTIPY_CLIENT_SECRET))
-except Exception as e:
-    st.error(f"Erro ao autenticar com a API do Spotify: {e}")
-    sp = None
+
+# --- FUNÇÕES DE IMAGEM VIA DEEZER API (PÚBLICA E SEM AUTENTICAÇÃO) ---
 
 @st.cache_data
 def get_artist_image(artist_name):
-    if sp is None:
-        return None
     try:
-        # Pega apenas o primeiro artista se houver vírgula
         primary_artist_name = artist_name.split(',')[0].strip() if isinstance(artist_name, str) else artist_name
-        
-        results = sp.search(q='artist:' + primary_artist_name, type='artist', limit=1)
-        if results['artists']['items'] and results['artists']['items'][0]['images']:
-            return results['artists']['items'][0]['images'][0]['url']
-    except Exception as e:
-        st.error(f"Erro ao buscar imagem do artista {artist_name}: {e}")
+        url = f"https://api.deezer.com/search/artist?q={primary_artist_name}"
+        response = requests.get(url, timeout=5).json()
+        if response.get('data'):
+            return response['data'][0]['picture_medium']
+    except Exception:
+        pass
     return None
 
 @st.cache_data
 def get_album_image(album_name):
-    if sp is None:
-        return None
     try:
-        results = sp.search(q='album:' + album_name, type='album', limit=1)
-        if results and 'albums' in results and results['albums']['items']:
-            album_item = results['albums']['items'][0]
-            if 'images' in album_item and album_item['images']:
-                return album_item['images'][0]['url']
-    except Exception as e:
-        st.error(f"Erro ao buscar imagem do álbum {album_name}: {e}")
+        url = f"https://api.deezer.com/search/album?q={album_name}"
+        response = requests.get(url, timeout=5).json()
+        if response.get('data'):
+            return response['data'][0]['cover_medium']
+    except Exception:
+        pass
     return None
     
 @st.cache_data
 def get_track_album_image(track_name, artist_name):
-    if sp is None:
-        return None
-        
-    image_url = None
-    
-    # 1. Tenta buscar a imagem do álbum da faixa
     try:
         primary_artist_name = artist_name.split(',')[0].strip() if isinstance(artist_name, str) else artist_name
+        url = f"https://api.deezer.com/search?q=track:\"{track_name}\" artist:\"{primary_artist_name}\""
+        response = requests.get(url, timeout=5).json()
         
-        results = sp.search(q=f'track:{track_name} artist:{primary_artist_name}', type='track', limit=1)
-        if results and 'tracks' in results and results['tracks']['items']:
-            track_item = results['tracks']['items'][0]
-            if 'album' in track_item and 'images' in track_item['album'] and track_item['album']['images']:
-                image_url = track_item['album']['images'][0]['url']
-                
-    except Exception as e:
-        # Erro de busca no Spotify (ex: música não existe ou problema de API)
-        pass # Continua para o fallback
+        if response.get('data'):
+            return response['data'][0]['album']['cover_medium']
+    except Exception:
+        pass
         
-    # 2. Se a imagem do álbum falhou ou não foi encontrada, usa a imagem do artista (FALLBACK)
-    if not image_url:
-        image_url = get_artist_image(artist_name)
-        
-    return image_url
+    # Fallback se a música específica falhar
+    return get_artist_image(artist_name)
 
-# CORREÇÃO: Formatação robusta para Padrão BR (Ponto Milhar)
+
+# --- FORMATADORES ---
+
 def format_br_number(number):
-    """Preserva os dígitos, limpa e formata o número para o padrão BR (ponto milhar)."""
     try:
-        # 1. Limpeza
         number_str = str(number).strip()
-        
         number_pure = number_str.replace('.', '').replace(',', '')
-        
-        # Se for um float (e.g. 2319970.0), converte para int para evitar casa decimal
-        if '.' in number_str: # Se a string original ou limpa ainda tiver ponto (sinal de decimal no BR ou separador no US)
+        if '.' in number_str:
              num_int = int(float(number_pure))
         else:
              num_int = int(number_pure)
-        
-        # 3. Formatação
-        # Formata o número com separadores de milhar do sistema (vírgula no US)
         s = f"{num_int:,}"
-        
-        # 4. Ajuste BR: troca separadores (vírgula por ponto, ponto por vírgula)
         s = s.replace(",", "X").replace(".", ",").replace("X", ".")
-        
         return s
-        
     except (ValueError, TypeError):
-        # Retorna o valor original como string se a conversão falhar
         return str(number)
         
 def format_br_date(date_str):
@@ -169,8 +133,6 @@ def format_br_date(date_str):
         return str(date_str)
 
 def update_date_range(key_suffix, df_original, item_col, date_col_name):
-    """Callback para recalcular e armazenar as datas min/max do item selecionado no session_state."""
-    
     selected_item = st.session_state[f"selectbox_{key_suffix}"]
     df_filtered = df_original[df_original[item_col] == selected_item].copy()
     
@@ -213,7 +175,6 @@ def display_chart(sheet_index, section_title, item_type, key_suffix, chart_type,
     
     if chart_type == 'daily':
         latest_date_available = df[date_col_name].max().date()
-        
         show_date_selector = st.checkbox("Pesquisar por datas anteriores?", key=f"checkbox_{key_suffix}")
         
         if show_date_selector:
@@ -229,7 +190,6 @@ def display_chart(sheet_index, section_title, item_type, key_suffix, chart_type,
             
     elif chart_type == 'weekly':
         latest_date_available = df[date_col_name].max().date()
-        
         show_date_selector = st.checkbox("Pesquisar por datas anteriores?", key=f"checkbox_{key_suffix}")
 
         if show_date_selector:
@@ -249,7 +209,6 @@ def display_chart(sheet_index, section_title, item_type, key_suffix, chart_type,
                 st.info(f"Nenhum dado encontrado para a data selecionada: {selected_date_display.strftime('%d/%m/%Y')}.")
             
     if not df_display.empty:
-        
         total_artistas = df_display['Artista'].nunique()
         if item_type == 'o artista':
             col_artists = st.columns(1)
@@ -275,7 +234,6 @@ def display_chart(sheet_index, section_title, item_type, key_suffix, chart_type,
             if selected_date_display:
                 st.markdown(f"**Dados do dia:** {selected_date_display.strftime('%d/%m/%Y')}")
 
-        # --- Visualização da Tabela ---
         has_streams = platform == 'Spotify' and 'Streams' in df_display.columns and not df_display['Streams'].isna().all() and "Artists" not in section_title and "Albums" not in section_title
         has_peak_date = 'Data de Pico' in df_display.columns or 'Data do Pico' in df_display.columns
         has_views_youtube = platform == 'Youtube' and 'Visualizações Semanais' in df_display.columns and not df_display['Visualizações Semanais'].isna().all()
@@ -286,20 +244,17 @@ def display_chart(sheet_index, section_title, item_type, key_suffix, chart_type,
         if has_peak_date: column_ratios.append(1.2)
         
         header_cols = st.columns(column_ratios)
-        
-        # Determina o cabeçalho correto para a coluna de tempo (Dias ou Semanas)
         time_header = "Dias no Charts"
         if "Weekly" in section_title or "Semanal" in section_title:
             time_header = "Semanas no Charts"
             
-        # CORREÇÃO APLICADA: Renomeação dos cabeçalhos das colunas
         with header_cols[0]: st.markdown("<b>#</b>", unsafe_allow_html=True)
         with header_cols[1]: 
             header_text = "ARTISTA" if "Top Artists" in section_title or "Top Artistas" in section_title else ("ÁLBUM" if "Top Albums" in section_title else "MÚSICA/FAIXA")
             st.markdown(f"<b>{header_text}</b>", unsafe_allow_html=True)
         with header_cols[2]: st.markdown("<b>Pico</b>", unsafe_allow_html=True)
         with header_cols[3]: st.markdown("<b>Anterior</b>", unsafe_allow_html=True)
-        with header_cols[4]: st.markdown(f"<b>{time_header}</b>", unsafe_allow_html=True) # Cabeçalho dinâmico
+        with header_cols[4]: st.markdown(f"<b>{time_header}</b>", unsafe_allow_html=True)
 
         col_index = 5
         if has_streams:
@@ -312,9 +267,7 @@ def display_chart(sheet_index, section_title, item_type, key_suffix, chart_type,
             with header_cols[col_index]: st.markdown("<b>Data de Pico</b>", unsafe_allow_html=True)
 
         st.markdown("---")
-
-        # Define a largura padrão para a imagem (PADRONIZADO PARA 200 PIXELS)
-        image_width = 200 
+        image_width = 100 
 
         for index, row in df_display.iterrows():
             rank = row.get('Rank', 'N/A')
@@ -324,12 +277,9 @@ def display_chart(sheet_index, section_title, item_type, key_suffix, chart_type,
             peak_rank = row.get('peak_rank', 'N/A')
             previous_rank = row.get('previous_rank', 'N/A')
             
-            # CORREÇÃO APLICADA: Busca por 'Weeks_on_chart' para charts semanais (Semanal ou Weekly)
             streak = row.get('days_on_chart', 'N/A')
             if "Weekly" in section_title or "Semanal" in section_title: 
-                # Tenta 'Weeks_on_chart' (YouTube) ou 'weeks_on_chart' (Spotify)
                 streak = row.get('Weeks_on_chart', row.get('weeks_on_chart', 'N/A'))
-
 
             streams = "N/A"
             if platform == 'Spotify' and 'Streams' in row:
@@ -340,9 +290,8 @@ def display_chart(sheet_index, section_title, item_type, key_suffix, chart_type,
             peak_date = row.get('Data de Pico') or row.get('Data do Pico', 'N/A')
             if peak_date != 'N/A': peak_date = format_br_date(peak_date)
 
+            # Nova extração via Deezer pública
             image_url = None
-            
-            # Lógica de fallback para imagens
             if item_type == 'o artista': image_url = get_artist_image(artist_name)
             elif item_type == 'o álbum': image_url = get_album_image(item_name)
             elif item_type in ['a música', 'a faixa']: 
@@ -353,7 +302,7 @@ def display_chart(sheet_index, section_title, item_type, key_suffix, chart_type,
             with cols[1]:
                 track_cols = st.columns([0.7, 3])
                 with track_cols[0]:
-                    if image_url: st.image(image_url, width=image_width, caption="")
+                    if image_url: st.image(image_url, width=image_width)
                     else: st.write("🖼️")
                 with track_cols[1]:
                     st.markdown(f"**{item_name}**")
@@ -378,14 +327,12 @@ def display_chart(sheet_index, section_title, item_type, key_suffix, chart_type,
         if selected_date_display: st.info(f"Nenhum dado encontrado para a data selecionada: {selected_date_display.strftime('%d/%m/%Y')}.")
         st.write("---")
 
-    # --- Início do Gráfico de Análise ---
-    
+    # --- Gráfico ---
     df['Mês'] = df[date_col_name].dt.strftime('%B')
     df['Ano'] = df[date_col_name].dt.year
     df_unique_items = sorted(df[item_col].unique())
 
     selectbox_key = f"selectbox_{key_suffix}"
-    
     if selectbox_key not in st.session_state and df_unique_items:
         st.session_state[selectbox_key] = df_unique_items[0]
         update_date_range(key_suffix, df, item_col, date_col_name)
@@ -403,7 +350,6 @@ def display_chart(sheet_index, section_title, item_type, key_suffix, chart_type,
 
     start_date_state_key = f'start_date_state_{key_suffix}'
     end_date_state_key = f'end_date_state_{key_suffix}'
-    
     if start_date_state_key not in st.session_state: update_date_range(key_suffix, df, item_col, date_col_name)
         
     df_filtered = df[df[item_col] == selected_item].copy()
@@ -411,27 +357,14 @@ def display_chart(sheet_index, section_title, item_type, key_suffix, chart_type,
     st.write("---")
     col1, col2 = st.columns(2)
     with col1:
-        start_date = st.date_input(
-            "Data de Início", 
-            value=st.session_state[start_date_state_key],
-            min_value=st.session_state[start_date_state_key],
-            max_value=st.session_state[end_date_state_key],
-            key=f"start_date_{key_suffix}"
-        )
+        start_date = st.date_input("Data de Início", value=st.session_state[start_date_state_key], min_value=st.session_state[start_date_state_key], max_value=st.session_state[end_date_state_key], key=f"start_date_{key_suffix}")
     with col2:
-        end_date = st.date_input(
-            "Data de Fim", 
-            value=st.session_state[end_date_state_key],
-            min_value=st.session_state[start_date_state_key],
-            max_value=st.session_state[end_date_state_key],
-            key=f"end_date_{key_suffix}"
-        )
+        end_date = st.date_input("Data de Fim", value=st.session_state[end_date_state_key], min_value=st.session_state[start_date_state_key], max_value=st.session_state[end_date_state_key], key=f"end_date_{key_suffix}")
         
     df_chart = df_filtered[(df_filtered[date_col_name].dt.date >= start_date) & (df_filtered[date_col_name].dt.date <= end_date)].copy()
 
     y_axis_col = "Rank"
     y_axis_title = "Posição no Ranking"
-    y_tickformat = None
 
     if item_type in ["a música", "a faixa"]:
         chart_options = ["Ranking"]
@@ -440,46 +373,26 @@ def display_chart(sheet_index, section_title, item_type, key_suffix, chart_type,
             
         if len(chart_options) > 1:
             chart_type_radio = st.radio("Tipo de visualização:", chart_options, key=f"radio_chart_type_{key_suffix}")
-            
             if chart_type_radio == "Ranking": y_axis_col = "Rank"; y_axis_title = "Posição no Ranking"
             elif chart_type_radio == "Streams": y_axis_col = "Streams"; y_axis_title = "Número de Streams"
             elif chart_type_radio == "Visualizações": y_axis_col = "Visualizações Semanais"; y_axis_title = "Número de Visualizações"
 
     if y_axis_col in ["Streams", "Visualizações Semanais"] and y_axis_col in df_chart.columns:
-        
-        # --- CORREÇÃO DE BUG: Conversão e Formatação para o Gráfico ---
-        # 1. Converte a coluna para string e limpa os separadores de milhar (ponto e vírgula) do GSheets/BR
         df_chart['temp_numeric'] = df_chart[y_axis_col].astype(str).str.replace('.', '', regex=False).str.replace(',', '', regex=False)
-        
-        # 2. Converte para float para ser o eixo Y do Plotly
         df_chart[y_axis_col] = pd.to_numeric(df_chart['temp_numeric'], errors='coerce')
-        
-        # 3. Usa a função corrigida `format_br_number` para criar a coluna de texto formatado (para o hover/text)
         df_chart['y_axis_formatted'] = df_chart[y_axis_col].apply(lambda x: format_br_number(x))
-
-        # Remove a coluna temporária
         df_chart = df_chart.drop(columns=['temp_numeric'])
-        # --- FIM DA CORREÇÃO DE BUG ---
 
-        y_tickformat = None
-    
     text_col = 'y_axis_formatted' if 'y_axis_formatted' in df_chart.columns else y_axis_col
 
-    image_url = None
     artist_name = ''
     if item_type == 'o artista': artist_name = selected_item
     elif item_type in ['a música', 'a faixa']:
         artist_name_series = df[df[item_col] == selected_item]['Artista']
         if not artist_name_series.empty: artist_name = artist_name_series.iloc[0].split(',')[0].strip()
     
-    if platform == 'Youtube':
-        artist_for_image = artist_name.split(',')[0].strip() if isinstance(artist_name, str) else artist_name
-        image_url = get_artist_image(artist_for_image)
-    elif item_type == 'o artista': image_url = get_artist_image(selected_item)
-    elif item_type in ['a música', 'a faixa']:
-        if artist_name:
-            image_url = get_track_album_image(selected_item, artist_name)
-            if not image_url: image_url = get_artist_image(artist_name)
+    if item_type == 'o artista': image_url = get_artist_image(selected_item)
+    elif item_type in ['a música', 'a faixa']: image_url = get_track_album_image(selected_item, artist_name)
     elif item_type == 'o álbum': image_url = get_album_image(selected_item)
     
     if image_url:
@@ -493,16 +406,13 @@ def display_chart(sheet_index, section_title, item_type, key_suffix, chart_type,
         
     fig = px.line(df_chart, x=date_col_name, y=y_axis_col, text=text_col, line_shape='spline')
     
-    # Se for Streams ou Visualizações, remove os pontos para que o número não seja exibido com casas decimais no hover.
     if y_axis_col in ["Streams", "Visualizações Semanais"]:
          fig.update_traces(texttemplate='%{text}', textposition='top center')
     else:
          fig.update_traces(textposition='top center')
          
-    
     yaxis_config = {'title': y_axis_title}
     if y_axis_col == 'Rank': yaxis_config['autorange'] = 'reversed'
-    if y_tickformat: yaxis_config['tickformat'] = y_tickformat
     
     fig.update_layout(xaxis_title="Dia", yaxis=yaxis_config)
     st.plotly_chart(fig)
@@ -521,11 +431,7 @@ def display_weekly_global_chart(global_sheet_index, global_section_title, global
     date_col_name = 'Data' if 'Data' in df.columns else 'DATA'
     df[date_col_name] = pd.to_datetime(df[date_col_name], format="%d/%m/%Y")
     
-    today_br = datetime.now(TZ).date() if TZ else datetime.today().date()
-    yesterday = today_br - timedelta(days=1)
-    
     latest_date_available = df[date_col_name].max().date()
-    
     show_date_selector = st.checkbox("Pesquisar por datas anteriores?", key=f"checkbox_{global_key_suffix}")
     
     df_display = pd.DataFrame()
@@ -543,18 +449,11 @@ def display_weekly_global_chart(global_sheet_index, global_section_title, global
         st.markdown(f"**Dados do dia:** {selected_date_display.strftime('%d/%m/%Y')}")
     else:
         if not show_date_selector:
-            st.info(f"😪 Nenhum dado encontrado para os artistas Vybbe no chart de {yesterday.strftime('%d/%m/%Y')}.")
-        elif selected_date_display:
-            st.info(f"Nenhum dado encontrado para a data selecionada: {selected_date_display.strftime('%d/%m/%Y')}.")
+            st.info(f"😪 Nenhum dado encontrado.")
         st.write("---")
         return
 
-    # --- Visualização da Tabela ---
-    
-    # --- Início do Gráfico de Análise ---
-    
     df_unique_items = sorted(df[item_col].unique())
-    
     selectbox_key = f"selectbox_{global_key_suffix}"
     
     if selectbox_key not in st.session_state and df_unique_items:
@@ -574,7 +473,6 @@ def display_weekly_global_chart(global_sheet_index, global_section_title, global
 
     start_date_state_key = f'start_date_state_{global_key_suffix}'
     end_date_state_key = f'end_date_state_{global_key_suffix}'
-    
     if start_date_state_key not in st.session_state: update_date_range(global_key_suffix, df, item_col, date_col_name)
         
     df_filtered = df[df[item_col] == selected_item].copy()
@@ -582,21 +480,9 @@ def display_weekly_global_chart(global_sheet_index, global_section_title, global
     st.write("---")
     col1, col2 = st.columns(2)
     with col1:
-        start_date = st.date_input(
-            "Data de Início", 
-            value=st.session_state[start_date_state_key],
-            min_value=st.session_state[start_date_state_key],
-            max_value=st.session_state[end_date_state_key],
-            key=f"start_date_{global_key_suffix}"
-        )
+        start_date = st.date_input("Data de Início", value=st.session_state[start_date_state_key], min_value=st.session_state[start_date_state_key], max_value=st.session_state[end_date_state_key], key=f"start_date_{global_key_suffix}")
     with col2:
-        end_date = st.date_input(
-            "Data de Fim", 
-            value=st.session_state[end_date_state_key],
-            min_value=st.session_state[start_date_state_key],
-            max_value=st.session_state[end_date_state_key],
-            key=f"end_date_{global_key_suffix}"
-        )
+        end_date = st.date_input("Data de Fim", value=st.session_state[end_date_state_key], min_value=st.session_state[start_date_state_key], max_value=st.session_state[end_date_state_key], key=f"end_date_{global_key_suffix}")
         
     df_chart = df_filtered[(df_filtered[date_col_name].dt.date >= start_date) & (df_filtered[date_col_name].dt.date <= end_date)].copy()
 
@@ -610,7 +496,6 @@ def display_weekly_global_chart(global_sheet_index, global_section_title, global
         if not artist_name_series.empty:
             artist_name = artist_name_series.iloc[0].split(',')[0].strip()
             image_url = get_track_album_image(selected_item, artist_name)
-            if not image_url: image_url = get_artist_image(artist_name)
     elif global_item_type == 'o álbum': image_url = get_album_image(selected_item)
     
     if image_url:
@@ -631,11 +516,9 @@ def display_weekly_global_chart(global_sheet_index, global_section_title, global
     fig.update_layout(xaxis_title="Dia", yaxis=yaxis_config)
     st.plotly_chart(fig)
     st.write("---")
+
 @st.cache_data
 def generate_whatsapp_message():
-    """Busca dados dos Daily Charts de múltiplas plataformas e formata uma mensagem detalhada para WhatsApp."""
-    
-    # Mapeamento: (sheet_index, chart_name_prefix, item_col, platform_name, is_youtube)
     daily_charts_config = [
         (5, "Spotify - Diário Top Músicas Brasil", 'Música', 'Spotify', False),
         (9, "Spotify - Diário Viral Músicas Brasil", 'Música', 'Spotify', False), 
@@ -648,40 +531,23 @@ def generate_whatsapp_message():
     ]
 
     message_parts = []
-    
-    today_br = datetime.now(TZ).date() if TZ else datetime.today().date()
-    # yesterday é usada apenas para fins de exibição da data, o filtro usa a data real do dado
-    yesterday = today_br - timedelta(days=1) 
-    
     for sheet_index, chart_name_prefix, item_col, platform_name, is_youtube in daily_charts_config:
         df = load_data(sheet_index)
-
-        if df.empty:
-            continue
+        if df.empty: continue
             
         date_col_name = 'DATA' if 'DATA' in df.columns else 'Data'
         df[date_col_name] = pd.to_datetime(df[date_col_name], format="%d/%m/%Y", errors='coerce')
         df = df.dropna(subset=[date_col_name])
+        if df.empty: continue
         
-        if df.empty:
-            continue
-        
-        latest_date_available = df[date_col_name].max().date()
-        date_to_filter = latest_date_available 
-        
+        date_to_filter = df[date_col_name].max().date()
         df_display = df[df[date_col_name].dt.date == date_to_filter].copy()
-
-        if df_display.empty:
-            continue
+        if df_display.empty: continue
             
-        # Garante ordenação numérica e usa o total de itens presentes
         df_display['Rank_num'] = pd.to_numeric(df_display['Rank'], errors='coerce')
         df_display = df_display.sort_values(by='Rank_num', ascending=True).dropna(subset=['Rank_num'])
-        
         total_items = len(df_display)
         
-        # --- CABEÇALHO ---
-        # Tópicos principais em negrito (usando *)
         chart_title = chart_name_prefix.split(' - ')[-1]
         message_parts.append(f"🎶 *{platform_name}* - *{chart_title}*")
         message_parts.append(f"📅 *Dados de:* {date_to_filter.strftime('%d/%m/%Y')}")
@@ -693,176 +559,112 @@ def generate_whatsapp_message():
         message_parts.append(f"---------------------------------------")
         message_parts.append(f"*Chart Completo* ({total_items} item{'s' if total_items != 1 else ''}) -")
         
-        # --- DETALHES DAS MÚSICAS ---
         for _, row in df_display.iterrows():
             rank = row.get('Rank', 'N/A')
             item_name = row.get(item_col, '').strip()
             artist_col = 'Artista' if 'Artista' in row else 'Criador'
             artist_name = row.get(artist_col, 'N/A').strip()
             
-            # Métricas
             streams = row.get('Streams', None)
             views = row.get('Visualizações Semanais', None)
             previous_rank = row.get('previous_rank', 'N/A')
             peak_rank = row.get('peak_rank', 'N/A')
             
-            # Verifica se é chart Weekly (para dias ou semanas)
             days_on_chart = row.get('days_on_chart', row.get('weeks_on_chart', row.get('Weeks_on_chart', 'N/A')))
             days_label = "Dias" if sheet_index in [4, 5, 8, 9, 12, 13, 14, 18, 19] else "Semanas"
             
-            # Linha Principal (Negrito no Rank e Título da Música)
             stream_info = ""
-            if streams:
-                formatted_streams = format_br_number(streams)
-                stream_info = f" ({formatted_streams} Streams)"
-            elif views:
-                formatted_views = format_br_number(views)
-                stream_info = f" ({formatted_views} Visualizações)"
+            if streams: stream_info = f" ({format_br_number(streams)} Streams)"
+            elif views: stream_info = f" ({format_br_number(views)} Visualizações)"
                 
-            # Formato: 7. Pela Última Vez - Ao Vivo - Grupo Menos É Mais, NATTAN (1.135.516 Streams)
             message_parts.append(f"*{rank}. {item_name}* - {artist_name}{stream_info}")
-            
-            # Linha Secundária (Detalhamento)
-            # Formato: Ant.: 7 | Pico: 2 | Dias: 58
             message_parts.append(f"   Ant.: {previous_rank} | Pico: {peak_rank} | {days_label}: {days_on_chart}")
             
         message_parts.append(f"---------------------------------------")
 
     message_parts.append(f"\n*Acesse o dashboard completo para mais detalhes:*")
     message_parts.append(f"https://vybbestreams.streamlit.app/")
-
     return "\n".join(message_parts)
 
-# --- FUNÇÃO PARA GERAR MENSAGEM SEMANAL (COMPLETA) ---
 @st.cache_data
 def generate_weekly_whatsapp_message():
-    """Busca dados dos Weekly Charts do Spotify e Youtube e formata uma mensagem detalhada para WhatsApp."""
-    
-    # Mapeamento: (sheet_index, chart_name_prefix, item_col, platform_name, is_youtube)
     weekly_charts_config = [
-        # Spotify Weekly
         (6, "Spotify - Semanal Top Músicas Global", 'Música', 'Spotify', False),
         (7, "Spotify - Semanal Top Músicas Brasil", 'Música', 'Spotify', False),
         (2, "Spotify - Semanal Top Artistas Global", 'Artista', 'Spotify', False),
         (3, "Spotify - Semanal Top Artistas Brasil", 'Artista', 'Spotify', False),
         (10, "Spotify - Semanal Top Álbuns Global", 'Álbum', 'Spotify', False),
-        (11, "Spotify - Semanal Top Álbuns Brasil", 'Álbum', 'Spotify', False),
-        # Youtube Weekly
-        # CORRIGIDO: Usando 'Música' conforme solicitado, em vez de 'Faixa'
+        (11, "Spotify - Semanal Top Álbuns Brasil", 'Álbuns', 'Spotify', False),
         (16, "YouTube - Top Faixas Semanal Brasil", 'Música', 'YouTube', True), 
         (15, "YouTube - Top Artistas Semanal Brasil", 'Artista', 'YouTube', True),
     ]
 
     message_parts = []
-    
-    today_br = datetime.now(TZ).date() if TZ else datetime.today().date()
-    
     for sheet_index, chart_name_prefix, item_col, platform_name, is_youtube in weekly_charts_config:
         df = load_data(sheet_index)
-
-        if df.empty:
-            continue
+        if df.empty: continue
             
         date_col_name = 'DATA' if 'DATA' in df.columns else 'Data'
         df[date_col_name] = pd.to_datetime(df[date_col_name], format="%d/%m/%Y", errors='coerce')
         df = df.dropna(subset=[date_col_name])
+        if df.empty: continue
         
-        if df.empty:
-            continue
-        
-        latest_date_available = df[date_col_name].max().date()
-        date_to_filter = latest_date_available 
-        
+        date_to_filter = df[date_col_name].max().date()
         df_display = df[df[date_col_name].dt.date == date_to_filter].copy()
-
-        if df_display.empty:
-            continue
+        if df_display.empty: continue
             
-        # Garante ordenação numérica e usa o total de itens presentes
         df_display['Rank_num'] = pd.to_numeric(df_display['Rank'], errors='coerce')
         df_display = df_display.sort_values(by='Rank_num', ascending=True).dropna(subset=['Rank_num'])
-        
         total_items = len(df_display)
         
-        # --- CABEÇALHO ---
         chart_title = chart_name_prefix.split(' - ')[-1]
         message_parts.append(f"\n🎶 *{platform_name}* - *{chart_title}*")
         message_parts.append(f"📅 *Dados de:* {date_to_filter.strftime('%d/%m/%Y')}")
-
         message_parts.append(f"---------------------------------------")
         message_parts.append(f"*Chart Completo* ({total_items} item{'s' if total_items != 1 else ''}) -")
         
-        # --- DETALHES DOS ITENS ---
         for _, row in df_display.iterrows():
             rank = row.get('Rank', 'N/A')
-            
-            # Extração robusta do item_name: Tenta o item_col configurado, se não funcionar, tenta 'Música' ou 'Faixa'
             item_name = str(row.get(item_col, '')).strip()
             if not item_name and item_col != 'Música' and 'Música' in row:
                  item_name = str(row.get('Música', '')).strip()
             if not item_name and item_col != 'Faixa' and 'Faixa' in row:
                  item_name = str(row.get('Faixa', '')).strip()
 
-            
-            # Artista só é incluído se o item_col não for Artista/Criador
             artist_name = ""
             artist_col = 'Artista' if 'Artista' in row else 'Criador'
             if item_col not in ['Artista', 'Criador', 'Álbum']:
                  artist_name = row.get(artist_col, 'N/A').strip()
             
-            # Métricas
             streams = row.get('Streams', None)
             views = row.get('Visualizações Semanais', None)
             previous_rank = row.get('previous_rank', row.get('Previous_Rank', 'N/A'))
             peak_rank = row.get('peak_rank', row.get('Peak_Rank', 'N/A'))
-            
-            # Para charts Semanais, forçamos a busca por semanas (usando Weeks_on_chart ou weeks_on_chart)
             weeks_on_chart = row.get('Weeks_on_chart', row.get('weeks_on_chart', 'N/A'))
             
-            # Linha Principal (Negrito no Rank e Título do Item)
             stream_info = ""
-            if streams and item_col not in ['Artista', 'Álbum']: # Só exibe streams para Músicas/Faixas
-                formatted_streams = format_br_number(streams)
-                stream_info = f" ({formatted_streams} Streams)"
+            if streams and item_col not in ['Artista', 'Álbum']:
+                stream_info = f" ({format_br_number(streams)} Streams)"
             elif views and item_col not in ['Artista', 'Álbum']:
-                formatted_views = format_br_number(views)
-                stream_info = f" ({formatted_views} Visualizações)"
+                stream_info = f" ({format_br_number(views)} Visualizações)"
                 
-            
-            # Linha: *RANK. NOME_DO_ITEM* - ARTISTA (Streams/Views)
-            # A linha principal agora garante que o item_name (nome da música) seja o primeiro elemento negrito
             display_item_name = item_name if item_name else "N/A"
-            
             artist_display = f" - {artist_name}" if artist_name else ""
             
             message_parts.append(f"*{rank}. {display_item_name}*{artist_display}{stream_info}")
-            
-            # Linha Secundária (Detalhamento)
             message_parts.append(f"   Ant.: {previous_rank} | Pico: {peak_rank} | Semanas: {weeks_on_chart}")
-            
         message_parts.append(f"---------------------------------------")
 
-    # --- RODAPÉ DA MENSAGEM ---
     message_parts.append(f"\nAcesse o dashboard completo para mais detalhes:")
     message_parts.append(f"https://vybbestreams.streamlit.app/")
-
     return "\n".join(message_parts)
 
-# --- Estrutura principal do aplicativo (Não alterada) ---
-try:
-    imagem_logo = Image.open('logo_Charts.jpg')
-    st.image(imagem_logo)
-except FileNotFoundError:
-    st.header("Logo 'habbla.jpg' não encontrada.")
-st.write("")
 
-import streamlit as st
 st.markdown(
     '<a href="https://ana-comparativa.streamlit.app/" target="_blank">Clique aqui para ir para a Análise Comparativa Faixas Top 200 Spotify</a>',
     unsafe_allow_html=True
 )
 
-#st.title('🎶 Vybbe Dashboard Streaming')
 st.markdown("Bem-vindo(a) ao seu portal de inteligência de mercado musical. Explore as tendências e rankings das principais plataformas de streaming, com dados atualizados e análises detalhadas para auxiliar na sua estratégia artística.")
 st.write("---")
 
@@ -927,24 +729,15 @@ elif plataforma_selecionada == "Youtube":
         opcao_selecionada_youtube = st.radio("Selecione uma opção:", ["Top Videos Diários", "Top Shorts Diários", "Top Clipes Semanal", "Top Faixas Semanal", "Top Artistas Semanal"], key="youtube_menu_radio")
     
     if opcao_selecionada_youtube == "Top Videos Diários":
-        sheet_index = 18
-        display_chart(sheet_index, "Top Videos Diários Brasil", "a música", "videos_diarios_br", 'daily', 'Youtube')
-
+        display_chart(18, "Top Videos Diários Brasil", "a música", "videos_diarios_br", 'daily', 'Youtube')
     elif opcao_selecionada_youtube == "Top Shorts Diários":
-        sheet_index = 19
-        display_chart(sheet_index, "Músicas mais tocadas nos Shorts neste dia", "a música", "shorts_diarios_br", 'daily', 'Youtube')
-
+        display_chart(19, "Músicas mais tocadas nos Shorts neste dia", "a música", "shorts_diarios_br", 'daily', 'Youtube')
     elif opcao_selecionada_youtube == "Top Clipes Semanal":
-        sheet_index = 17
-        display_chart(sheet_index, "Top Clipes Semanal Brasil", "a música", "clipes_semanal_br", 'weekly', 'Youtube')
-
+        display_chart(17, "Top Clipes Semanal Brasil", "a música", "clipes_semanal_br", 'weekly', 'Youtube')
     elif opcao_selecionada_youtube == "Top Faixas Semanal":
-        sheet_index = 16
-        display_chart(sheet_index, "Top Faixas Semanal Brasil", "a faixa", "faixas_semanal_br", 'weekly', 'Youtube')
-
+        display_chart(16, "Top Faixas Semanal Brasil", "a faixa", "faixas_semanal_br", 'weekly', 'Youtube')
     elif opcao_selecionada_youtube == "Top Artistas Semanal":
-        sheet_index = 15
-        display_chart(sheet_index, "Top Artistas Semanal Brasil", "o artista", "artistas_semanal_br", 'weekly', 'Youtube')
+        display_chart(15, "Top Artistas Semanal Brasil", "o artista", "artistas_semanal_br", 'weekly', 'Youtube')
 
 elif plataforma_selecionada == "Deezer":
     display_chart(sheet_index=12, section_title="Daily Top Songs Deezer", item_type="a música", key_suffix="songs_deezer", chart_type='daily', platform='Deezer')
@@ -956,10 +749,8 @@ elif plataforma_selecionada == "Apple Music":
     display_chart(sheet_index=14, section_title="Daily Top Songs Apple Music", item_type="a música", key_suffix="songs_apple", chart_type='daily', platform='Apple Music')
 
 st.write("---")
-st.markdown("Desenvolvido com Python e Streamlit, este painel é uma ferramenta essencial para a análise de mercado musical. Explore as tendências e rankings das principais plataformas de streaming, com dados atualizados e análises detalhadas para auxiliar na sua estratégia artística.")
+st.markdown("Desenvolvido com Python e Streamlit, este painel é uma ferramenta essencial para a análise de mercado musical.")
 
-# --- NOVO BLOCO: Botão de Download da Mensagem (Próximo ao rodapé) ---
-# st.radio para seleção de tipo de chart
 chart_type_download = st.radio(
     "Selecione o tipo de dado para download:", 
     ("Diário", "Semanal"),
@@ -986,25 +777,4 @@ st.download_button(
     help="Clique para baixar os rankings consolidados em um arquivo de texto para facilitar o compartilhamento no WhatsApp."
 )
 st.write("---")
-# Rodapé existente
-col1, col2 = st.columns([1, 4])
 
-with col1:
-    try:
-        rodape_image = Image.open('habbla_rodape.jpg')
-        st.image(rodape_image, width=110)
-    except FileNotFoundError:
-        st.write("Logo rodapé não encontrada.")
-
-with col2:
-    st.markdown(
-        """
-        <div style='font-size: 12px; color: gray;'>
-            Desenvolvido pela equipe de dados da <b>Habbla</b> | © 2025 Habbla Marketing<br>
-            Versão 1.0.0 | Atualizado em: Setembro/2025<br>
-            <a href="mailto:nil@habbla.ai">nil@habbla.ai</a> |
-            <a href="https://vybbe.com.br" target="_blank">Site Institucional</a>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
