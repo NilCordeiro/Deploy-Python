@@ -239,9 +239,9 @@ client = get_gspread_client()
 
 if client:
     try:
-        planilha_completa = client.open(title="2025_Charts")
+        planilha_completa = client.open(title="BD_Charts")
     except Exception as e:
-        st.error(f"❌ Erro ao abrir a planilha '2025_Charts': {e}")
+        st.error(f"❌ Erro ao abrir a planilha 'BD_Charts': {e}")
 
 # ─────────────────────────────────────────────
 #  DATA LOADING
