@@ -15,7 +15,7 @@ import pytz
 #  PAGE CONFIG & CUSTOM CSS
 # ─────────────────────────────────────────────
 st.set_page_config(
-    page_title="Vybbe Charts",
+    page_title="Charts",
     page_icon="🎵",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -907,7 +907,7 @@ def generate_weekly_whatsapp_message():
 # ─────────────────────────────────────────────
 st.markdown("""
 <div style="padding:32px 0 16px 0;">
-  <h1 style="font-size:42px;margin-bottom:4px;">🎵 Vybbe Charts</h1>
+  <h1 style="font-size:42px;margin-bottom:4px;">🎵 Charts Streaming</h1>
   <p style="color:#7070a0;font-size:16px;margin-top:0;">
     Inteligência de mercado musical · Dados em tempo real das principais plataformas
   </p>
@@ -1059,7 +1059,7 @@ elif plataforma_selecionada == "Apple Music":
 # ─────────────────────────────────────────────
 st.markdown("<hr>", unsafe_allow_html=True)
 st.markdown(
-    "<p style='color:#555580;font-size:13px;'>Desenvolvido com Python e Streamlit · Vybbe Charts</p>",
+    "<p style='color:#555580;font-size:13px;'>Desenvolvido com Python e Streamlit ·Charts</p>",
     unsafe_allow_html=True,
 )
 
