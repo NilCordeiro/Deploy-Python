@@ -87,16 +87,16 @@ h3 { font-family: 'Syne', sans-serif; font-weight: 600; color: #e0e0f0; }
 .chart-row:hover { border-color: #a78bfa; }
 
 .rank-badge {
-    font-family: 'Syne', sans-serif;
-    font-size: 22px;
-    font-weight: 800;
-    color: #a78bfa;
-    min-width: 36px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    color: #ffffff;
+    min-width: 28px;
     display: inline-block;
 }
-.rank-badge.gold  { color: #fbbf24; }
-.rank-badge.silver{ color: #94a3b8; }
-.rank-badge.bronze{ color: #c07a45; }
+.rank-badge.gold  { color: #ffffff; }
+.rank-badge.silver{ color: #ffffff; }
+.rank-badge.bronze{ color: #ffffff; }
 
 .item-name {
     font-family: 'Syne', sans-serif;
@@ -922,12 +922,52 @@ st.markdown(
 st.markdown("<hr>", unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────
-#  SIDEBAR
+#  SIDEBAR + THEME SELECTOR
 # ─────────────────────────────────────────────
 st.sidebar.markdown(
-    "<h2 style='font-family:Syne,sans-serif;font-size:20px;color:#a78bfa;margin-bottom:16px;'>🎛 Plataformas</h2>",
+    "<h2 style='font-family:Syne,sans-serif;font-size:20px;color:#a78bfa;margin-bottom:8px;'>🎛 Plataformas</h2>",
     unsafe_allow_html=True,
 )
+
+THEMES = {
+    "⚪ Branco":  {"bg": "#ffffff", "sidebar": "#f4f4f8", "text": "#111111", "sub": "#555577", "border": "#ddddee", "card": "#f0f0f8"},
+    "⚫ Escuro":  {"bg": "#0a0a0f", "sidebar": "#111118", "text": "#e8e8f0", "sub": "#7070a0", "border": "#1e1e2e", "card": "#16162a"},
+    "🔵 Azul":    {"bg": "#e8f0fe", "sidebar": "#dce8fd", "text": "#0d1b4b", "sub": "#3a5aaa", "border": "#b0c8f8", "card": "#d0e2fc"},
+    "🟣 Roxo":    {"bg": "#f3eeff", "sidebar": "#ebe0ff", "text": "#1a0050", "sub": "#7c3aed", "border": "#c4a0f8", "card": "#e8d8ff"},
+    "🟢 Verde":   {"bg": "#edfaf3", "sidebar": "#ddf5ea", "text": "#0a2e1a", "sub": "#166534", "border": "#a0d8b8", "card": "#d0f0e0"},
+}
+
+theme_label = st.sidebar.selectbox("🎨 Cor da página", list(THEMES.keys()), index=0, key="theme_selector")
+T = THEMES[theme_label]
+is_dark = theme_label == "⚫ Escuro"
+metric_val_col = "#a78bfa" if is_dark else "#6d28d9"
+link_col       = "#a78bfa" if is_dark else "#6d28d9"
+stat_col       = "#9090b8" if is_dark else "#444466"
+stat_hl        = "#a78bfa" if is_dark else "#6d28d9"
+
+st.markdown(f"""
+<style>
+.stApp {{ background: {T["bg"]} !important; color: {T["text"]} !important; }}
+section[data-testid="stSidebar"] {{ background: {T["sidebar"]} !important; border-right: 1px solid {T["border"]} !important; }}
+section[data-testid="stSidebar"] label, section[data-testid="stSidebar"] .stRadio label {{ color: {T["text"]} !important; }}
+h1, h2, h3 {{ color: {T["text"]} !important; }}
+p, li {{ color: {T["text"]}; }}
+[data-testid="metric-container"] {{ background: {T["card"]} !important; border: 1px solid {T["border"]} !important; }}
+[data-testid="metric-container"] label {{ color: {T["sub"]} !important; }}
+[data-testid="metric-container"] [data-testid="stMetricValue"] {{ color: {metric_val_col} !important; }}
+.rank-badge {{ color: {T["text"]} !important; }}
+.item-name {{ color: {T["text"]} !important; }}
+.artist-name {{ color: {T["sub"]} !important; }}
+.stat-cell {{ color: {stat_col} !important; }}
+.stat-highlight {{ color: {stat_hl} !important; }}
+hr {{ border-top: 1px solid {T["border"]} !important; }}
+div[style*="border-top:1px solid #16162a"] {{ border-top-color: {T["border"]} !important; }}
+.stSelectbox > div > div, .stDateInput > div > div {{ background: {T["card"]} !important; border-color: {T["border"]} !important; color: {T["text"]} !important; }}
+.stCheckbox label {{ color: {T["sub"]} !important; }}
+a {{ color: {link_col} !important; }}
+</style>
+""", unsafe_allow_html=True)
+
 plataforma_selecionada = st.sidebar.radio(
     "Selecione:",
     ["Spotify", "Youtube", "Deezer", "Amazon", "Apple Music"],
