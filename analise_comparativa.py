@@ -76,7 +76,7 @@ df = load_data_comparativo(5)
 
 if not df.empty:
     # Tratamento de Dados
-    df['DATA'] = pd.to_datetime(df['DATA'], format="%d/%m/%Y")
+    df['DATA'] = pd.to_datetime(df['DATA'], format="%d/%m/%Y",errors = 'coerce')
     df['Streams_Num'] = pd.to_numeric(df['Streams'].astype(str).str.replace('.', '').replace(',', ''), errors='coerce')
     df['Streams_Formatado'] = df['Streams_Num'].apply(format_br_number)
 
