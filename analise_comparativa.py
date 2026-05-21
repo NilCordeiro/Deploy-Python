@@ -57,9 +57,6 @@ def format_br_number(number):
         return f"{num_int:,}".replace(",", "X").replace(".", ",").replace("X", ".")
     except: return str(number)
 
-rodape_image = Image.open('habbla_rodape.jpg')
-st.image(rodape_image, width=110)
-st.write("---")
 
 st.set_page_config(page_title='Comparativo Vybbe', layout="wide")
 
@@ -131,24 +128,3 @@ else:
 
 st.write("---")
 
-col1, col2 = st.columns([1, 4])
-
-with col1:
-    try:
-        rodape_image = Image.open('habbla_rodape.jpg')
-        st.image(rodape_image, width=110)
-    except FileNotFoundError:
-        st.write("Logo rodapé não encontrada.")
-
-with col2:
-    st.markdown(
-        """
-        <div style='font-size: 12px; color: gray;'>
-            Desenvolvido pela equipe de dados da <b>Habbla</b> | © 2026 Habbla Marketing<br>
-            Versão 1.0.0 | Atualizado em: Janeiro/2026<br>
-            <a href="mailto:nil@habbla.ai">nil@habbla.ai</a> |
-            <a href="https://vybbe.com.br" target="_blank">Site Institucional</a>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
