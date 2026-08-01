@@ -28,7 +28,7 @@ from modules.vector_store_demo import (
 )
 
 # ⚠️ TROQUE pelo link real do seu checkout (Stripe, Hotmart, Kiwify, etc.)
-LINK_CHECKOUT = "https://SEU-LINK-DE-CHECKOUT-AQUI.com"
+LINK_CHECKOUT = "https://pay.kiwify.com.br/7jRLEjs"
 
 LIMITE_PERGUNTAS_SESSAO = 8
 LIMITE_PAGINAS_PDF = 20
@@ -63,7 +63,7 @@ st.markdown(
     .botao-compra {
         display: block;
         text-align: center;
-        background: #DC2626;
+        background: #10B981;
         color: #ffffff !important;
         font-weight: 700;
         font-size: 15px;
@@ -85,7 +85,7 @@ st.markdown(
 # ----------------------------------------------------------------------
 st.markdown(
     f'<a class="botao-compra" href="{LINK_CHECKOUT}" target="_blank">'
-    f"🔓 Compre a versão completa</a>",
+    f"🚀 Liberar Acesso Ilimitad</a>",
     unsafe_allow_html=True,
 )
 
