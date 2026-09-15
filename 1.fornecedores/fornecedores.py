@@ -59,7 +59,7 @@ import streamlit as st
 # ============================================================
 # CONFIGURAÇÃO PRINCIPAL
 # ============================================================
-CAMINHO_PLANILHA = "1.fornecedores\BD_Fornecedores.xlsx"
+CAMINHO_PLANILHA = "BD_Fornecedores.xlsx"
 PASTA_CACHE = ".cache_analise_fornecedores"
 
 TITULO_APP = "Análise de Fornecedores"
