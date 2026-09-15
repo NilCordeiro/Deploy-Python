@@ -56,10 +56,15 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+CAMINHO_PLANILHA = BASE_DIR / "BD_Fornecedores.xlsx"
+
 # ============================================================
 # CONFIGURAÇÃO PRINCIPAL
 # ============================================================
-CAMINHO_PLANILHA = "BD_Fornecedores.xlsx"
+#CAMINHO_PLANILHA = "BD_Fornecedores.xlsx"
 PASTA_CACHE = ".cache_analise_fornecedores"
 
 TITULO_APP = "Análise de Fornecedores"
